@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  role      String   @default("customer")
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders    Order[]
+
+  @@map("users")
+}
+
+model Medicine {
+  id                   String   @id
+  name                 String
+  genericName          String?  @map("generic_name")
+  category             String?
+  dosageForm           String   @default("tablet") @map("dosage_form")
+  strength             String?
+  unit                 String   @default("strip")
+  price                Int      @default(0)
+  stock                Int      @default(0)
+  minStock             Int      @default(10) @map("min_stock")
+  requiresPrescription Boolean  @default(false) @map("requires_prescription")
+  manufacturer         String?
+  description          String?
+  imageUrl             String?  @map("image_url")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("medicines")
+}
+
+model Order {
+  id                String      @id
+  invoiceNumber     String      @unique @map("invoice_number")
+  customerId        String?     @map("customer_id")
+  customerName      String      @map("customer_name")
+  customerPhone     String      @map("customer_phone")
+  customerEmail     String?     @map("customer_email")
+  subtotal          Int         @default(0)
+  deliveryFee       Int         @default(0) @map("delivery_fee")
+  discount          Int         @default(0)
+  grandTotal        Int         @default(0) @map("grand_total")
+  paymentMethod     String      @map("payment_method")
+  paymentStatus     String      @default("pending") @map("payment_status")
+  paymentProofUrl   String?     @map("payment_proof_url")
+  paidAt            DateTime?   @map("paid_at")
+  deliveryMethod    String      @map("delivery_method")
+  shippingAddress   String?     @map("shipping_address")
+  courierNotes      String?     @map("courier_notes")
+  orderStatus       String      @default("processing") @map("order_status")
+  staffVerifierName String?     @map("staff_verifier_name")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  completedAt       DateTime?   @map("completed_at")
+
+  customer          User?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items             OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                   String   @id
+  orderId              String   @map("order_id")
+  medicineId           String?  @map("medicine_id")
+  medicineName         String   @map("medicine_name")
+  dosageForm           String?  @map("dosage_form")
+  strength             String?
+  quantity             Int      @default(1)
+  unit                 String?
+  unitPrice            Int      @default(0) @map("unit_price")
+  totalPrice           Int      @default(0) @map("total_price")
+  requiresPrescription Boolean  @default(false) @map("requires_prescription")
+  instructions         String?
+
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model ConsultationMessage {
+  id            String   @id
+  customerId    String   @default("usr-customer-1") @map("customer_id")
+  sender        String
+  senderName    String   @map("sender_name")
+  text          String?
+  imageUrl      String?  @map("image_url")
+  imageCaption  String?  @map("image_caption")
+  audioUrl      String?  @map("audio_url")
+  audioDuration Int?     @map("audio_duration")
+  status        String   @default("sent")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("consultation_messages")
+}
